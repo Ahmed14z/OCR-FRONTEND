@@ -45,6 +45,21 @@ const STATUS_LABELS: Record<string, string> = {
   error: "Error",
 };
 
+function wrapMarkdownAsHtml(markdown: string): string {
+  // Escape HTML entities so raw markdown renders as plain text in a styled page
+  const escaped = markdown
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  return `<!DOCTYPE html>
+<html><head><style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         font-size: 14px; line-height: 1.6; padding: 24px; margin: 0;
+         color: #1a1a1a; background: #fff; white-space: pre-wrap; word-wrap: break-word; }
+</style></head><body>${escaped}</body></html>`;
+}
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -330,7 +345,7 @@ export default function Home() {
 
       {/* Results Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-[92vw] w-[92vw] h-[90vh] flex flex-col p-0 gap-0">
+        <DialogContent className="max-w-[96vw] sm:max-w-[96vw] w-[96vw] h-[92vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
             <div className="flex items-center justify-between pr-8">
               <div className="flex items-center gap-3">
@@ -426,22 +441,26 @@ export default function Home() {
                     <h3 className="text-sm font-semibold">Structure OCR</h3>
                     <Badge variant="outline" className="text-xs">Original</Badge>
                   </div>
-                  <ScrollArea className="flex-1 rounded-md border">
-                    <pre className="p-4 text-sm font-mono whitespace-pre-wrap">
-                      {result.structure_markdown || "No structure output"}
-                    </pre>
-                  </ScrollArea>
+                  <div className="flex-1 rounded-md border overflow-hidden">
+                    <iframe
+                      srcDoc={wrapMarkdownAsHtml(result.structure_markdown)}
+                      className="w-full h-full border-0"
+                      title="Structure OCR rendered"
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-col min-h-0">
                   <div className="flex items-center gap-2 mb-2 shrink-0">
-                    <h3 className="text-sm font-semibold">Visual Analysis</h3>
+                    <h3 className="text-sm font-semibold">Final Output</h3>
                     <Badge variant="secondary" className="text-xs">Refined</Badge>
                   </div>
-                  <ScrollArea className="flex-1 rounded-md border">
-                    <pre className="p-4 text-sm font-mono whitespace-pre-wrap">
-                      {result.vlm_markdown || "No visual analysis output"}
-                    </pre>
-                  </ScrollArea>
+                  <div className="flex-1 rounded-md border overflow-hidden">
+                    <iframe
+                      srcDoc={result.rendered_html}
+                      className="w-full h-full border-0"
+                      title="Final rendered output"
+                    />
+                  </div>
                 </div>
               </div>
             )}
